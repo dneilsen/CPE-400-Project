@@ -8,6 +8,7 @@ public:
 	int queue;
 	int capacity;
 	int pSpeed;
+	int Weight = 1;
 
     vector<Node> neighbors;
 
