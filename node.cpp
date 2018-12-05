@@ -8,8 +8,11 @@ public:
 	int queue;
 	int capacity;
 	int pSpeed;
-	int Weight = 1;
-
+	int weight = 1;
+	// forwarding table
+	vector<int> destination;
+	vector<int> link;
+	// links from node
     vector<Node> neighbors;
 
 	Node();
@@ -29,6 +32,33 @@ Node::~Node(){
 
 	neighbors.clear();
 
+}
+
+// make forwarding table through link state algorithm, this means the network is centralized ospf
+// the algorithm is dijkstra's page 393 in the book.
+void linkStateAlgorithm( Node* array, int arrayNum )
+{
+	// initialize
+	arrayNum;
+	int cost[arrayNum-1];
+	int nsize,i,j;
+	for( i = 0; i < arrayNum; i++)
+	{
+		for( j = 0; j < arrayNum-1; j++ )
+		{
+			cost[i] = 0; // 0 will represent infinity
+		}
+		
+		nsize = array[i].neighbors.size()
+		for( int j = 0; j < nsize; j++)
+		{
+			cost[array[i].neighbors[nsize].ID] = array[i].neighbors[nsize].weight;
+		}
+		for( int j = 0; j < arrayNum; j++ )
+		{
+			
+		}
+	}		
 }
 
 int main(){
