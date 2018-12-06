@@ -5,8 +5,9 @@
 // Edited by
 // David Neilson: Node class
 // Nicholas Rini: edited Node class, created Network
-// Michael Mills: edited node class, added linkStateAlgorithm, added file stream, added packet class
-//
+// Michael Mills: edited node class, started linkStateAlgorithm aka dijkstra's, added file stream, added packet class
+// Nicholas Rini: file input
+// Michael Mills: changed file input
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -30,7 +31,6 @@ class Node{
     int ID;
 	int queue;
 	int capacity;
-	int pSpeed;
 	int weight;
 	// forwarding table
 	int destination[9];
@@ -48,7 +48,6 @@ Node::Node(){
     ID = 0;
 	queue = 0;
 	capacity = maxcapacity;
-	pSpeed = 5;
 	weight = 1;
 }
 
@@ -124,13 +123,13 @@ Packet::makePacket( int s, int d, int id);
 	lost = false;
 	done = false;
 	nodeStop.push_back( s );
-	queueAtNode.push_back( id );
+	queueAtNode.push_back(  );
 }
 
 int main( int argc, char* argv[] )
 {
 	int i, j, k = 0, numPackets = 0, list;
-
+	int packetsLeft = 99;
 	// read in from file the source destinatin and # of packets
 	ifstream packetFile;
 	packetFile.open( argv[1] );
@@ -146,6 +145,7 @@ int main( int argc, char* argv[] )
 		packetFile >> rpacketnum[i];
 		k++;
 	}
+	packetFile.close();
 	if( k != list ){ cout << "potential error: input file length";}
 	// create the network
 	Node* array = new Node[8];
@@ -196,20 +196,47 @@ int main( int argc, char* argv[] )
 			rpackets[i] = makePacket( rsource[i], rdestination[i], i )
 		}
 	}
-	// no longer have to worry about command line arguments
-	// now to loop through all the packets through the nodes
+
+	// now to loop all the packets through the nodes
 	int count = 0;
-	while( packetsLeft )
+	while( packetsLeft > 0 )
 	{
-		// load packets into network
-		int previousNode = 99;
-		for( i = 0; i < numPackets; i++ )
+		
+		// loop through packets that dont have currentNode as 99 and move them to the next node
+		for( i = 0; i < numPackets; i++)
 		{
-			if( (rpacket[i].ID != previousNode) && (rpacket[i].currentNode != 99) )
+			if( (rpacket[i].done == false) && rpacket[i].currentNode != 99 )
 			{
-				rpacket[i].currentNode = rpacket[i].source;
+				// check if its the destination
+				if( rpacket[i].currentNode == rpacket[i].destinatin )
+				{
+					rpacket[i].done = true;
+					rpacket[i].endtime = time(0);
+				}
+				// move the currentNode to the next node and decrease queue, update packet with next nodes id and queue, if queue full lost packet, increase next node queue
+				
+				
+				
 			}
 		}
+		// load packets into network
+		int previousNode = 99; // this makes sure they go into it one at a time.
+		for( i = 0; i < numPackets; i++ )
+		{
+			if( (rpacket[i].ID != previousNode) && (rpacket[i].currentNode != 99) && (rpacket[i].done == false) )
+			{
+				rpacket[i].currentNode = rpacket[i].source;
+				array[rpacket[i].currentNode].queue += 1;
+			}
+		}
+		packetsLeft = 0;
+		// determine how many packets left
+		for( i = 0; i < numPackets; i++ )
+		{
+			if( rpacket[i].done == false ) packetsLeft++;
+		}
+		
+		// update count if count = updateTime reset count and update the forwarding table
 
 	}
 	// file output
@@ -217,7 +244,7 @@ int main( int argc, char* argv[] )
 	ofstream results ("results.txt");
 	if( results.is_open())
 	{
-		// calculate overall throughput and output to file // average( endTime - startTime + ( sum(queueatnode) * nodalDelay ) )
+		// calculate overall throughput and output to file // average( endTime - startTime ) then ( sum(queueatnode) * nodalDelay ) )
 		
 		// output #of packets lost
 		for( i = 0; i < numPackets; i++ )
