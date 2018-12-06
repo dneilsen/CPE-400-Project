@@ -102,7 +102,7 @@ class Packet
 	vector<int> nodeStop; // size of nodeStop is # of hops
 	vector<int> queueAtNode;
 	
-	makePacket( int s, int d, int id );
+	void makePacket( int s, int d, int id, Packet pack );
 	
 };
 Packet::Packet()
@@ -113,17 +113,15 @@ Packet::~Packet()
 {
 	
 }
-Packet::makePacket( int s, int d, int id);
+Packet::makePacket( int s, int d, int id, Packet pack);
 {
-	source = s;
-	destination = d;
-	ID = id;
-	currentNode = 99; // 99 means its waiting to enter network
-	startTime = time(0);
-	lost = false;
-	done = false;
-	nodeStop.push_back( s );
-	queueAtNode.push_back(  );
+	pack.source = s;
+	pack.destination = d;
+	pack.ID = id;
+	pack.currentNode = 99; // 99 means its waiting to enter network
+	pack.startTime = time(0);
+	pack.lost = false;
+	pack.done = false;
 }
 
 int main( int argc, char* argv[] )
@@ -193,12 +191,13 @@ int main( int argc, char* argv[] )
 	{
 		for( j = 0; j < rpacketnum[i]; j++ )
 		{
-			rpackets[i] = makePacket( rsource[i], rdestination[i], i )
+			makePacket( rsource[i], rdestination[i], i, rpackets[i] );
 		}
 	}
 
 	// now to loop all the packets through the nodes
 	int count = 0;
+	int nextNode;
 	while( packetsLeft > 0 )
 	{
 		
@@ -208,13 +207,29 @@ int main( int argc, char* argv[] )
 			if( (rpacket[i].done == false) && rpacket[i].currentNode != 99 )
 			{
 				// check if its the destination
-				if( rpacket[i].currentNode == rpacket[i].destinatin )
+				if( rpacket[i].currentNode == rpacket[i].destination )
 				{
 					rpacket[i].done = true;
 					rpacket[i].endtime = time(0);
 				}
 				// move the currentNode to the next node and decrease queue, update packet with next nodes id and queue, if queue full lost packet, increase next node queue
-				
+				 else
+				{
+					nextNode = array[rpacket[i].currentNode].link[rpacket[i].destination];
+					array[rpacket[i].currentNode].queue -= 1;
+					if( array[nextNode].queue != array[nextNode].capacity )
+					{
+						array[nextNode].queue++;
+						rpacket[i].currentNode = nextNode;
+						rpacket[i].nodeStop.push_back( nextNode );
+						rpacket[i].queueAtNode.push_back( array[nextNode].queue );
+					}
+					else
+					{
+						rpacket[i].lost = true;
+						rpacket[i].done = true;
+					}
+				}
 				
 				
 			}
@@ -227,6 +242,8 @@ int main( int argc, char* argv[] )
 			{
 				rpacket[i].currentNode = rpacket[i].source;
 				array[rpacket[i].currentNode].queue += 1;
+				rpacket[i].nodeStop.push_back(rpacket[i].currentNode);
+				rpacket[i].queueatNode.push_back(array[rpacket[i].currentNode].queue );
 			}
 		}
 		packetsLeft = 0;
@@ -244,7 +261,7 @@ int main( int argc, char* argv[] )
 	ofstream results ("results.txt");
 	if( results.is_open())
 	{
-		// calculate overall throughput and output to file // average( endTime - startTime ) then ( sum(queueatnode) * nodalDelay ) )
+		// calculate overall throughput and output to file // average( endTime - startTime ) then ( sum(queueatNode) * nodalDelay ) )
 		
 		// output #of packets lost
 		for( i = 0; i < numPackets; i++ )
