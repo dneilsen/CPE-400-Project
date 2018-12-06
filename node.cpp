@@ -122,6 +122,7 @@ Packet::makePacket( int s, int d, int id);
 	currentNode = 99; // 99 means its waiting to enter network
 	startTime = time(0);
 	lost = false;
+	done = false;
 	nodeStop.push_back( s );
 	queueAtNode.push_back( id );
 }
