@@ -34,7 +34,6 @@ class Node{
 	int capacity;
 	int weight;
 	// forwarding table
-	int destination[9];
 	int link[9];
 	// links from node
     vector<Node> neighbors;
@@ -103,7 +102,7 @@ class Packet
 	vector<int> nodeStop; // size of nodeStop is # of hops
 	vector<int> queueAtNode;
 	
-	void makePacket( int s, int d, int id, Packet pack );
+	void makePacket( int s, int d, int id, Packet &pack );
 	
 };
 Packet::Packet()
@@ -114,7 +113,7 @@ Packet::~Packet()
 {
 	
 }
-void makePacket( int s, int d, int id, Packet pack)
+void makePacket( int s, int d, int id, Packet &pack )
 {
 	pack.source = s;
 	pack.destination = d;
@@ -125,12 +124,14 @@ void makePacket( int s, int d, int id, Packet pack)
 	pack.lost = false;
 	pack.done = false;
 }
-
+//
+// Main /////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 int main( int argc, char* argv[] )
 {
 	int i, j, k = 0, numPackets = 0, list;
 	int packetsLeft = 99;
-	// read in from file the source destinatin and # of packets
+	// read in from file the source destination and # of packets
 	ifstream packetFile;
 	packetFile.open( argv[1] );
 	if( !packetFile.is_open()) {cout << "potential error: input file open";}
@@ -182,6 +183,20 @@ int main( int argc, char* argv[] )
 
 	array[8].neighbors.push_back(array[5]);
 	array[8].neighbors.push_back(array[6]);
+	
+	// initialize the forwarding table
+	for( i = 0; i < 9; i++ )
+	{
+		array[0].link[i] = 0;
+		array[1].link[i] = 0;
+		array[2].link[i] = 0;
+		array[3].link[i] = 0;
+		array[4].link[i] = 0;
+		array[5].link[i] = 0;
+		array[6].link[i] = 0;
+		array[7].link[i] = 0;
+		array[8].link[i] = 0;
+	}
 
 	// create packets for the network
 	for( i = 0; i < list; i++ )
@@ -191,26 +206,27 @@ int main( int argc, char* argv[] )
 
 	Packet rpacket[numPackets]; // creates a list of all packets
 
-
+	k = 0;
 	for( i = 0; i < list; i++ )
 	{
 		for( j = 0; j < rpacketnum[i]; j++ )
 		{
-			makePacket( rsource[i], rdestination[i], i, rpacket[i] );
+			makePacket( rsource[i], rdestination[i], i, rpacket[k] );
+			k++;
 		}
 	}
-	
-	cout << list << endl;
-	
 	// now to loop all the packets through the nodes
 	int count = 0;
 	int nextNode;
+	int previousNode;
 	while( packetsLeft > 0 )
 	{
-		
+		count++;
 		// loop through packets that dont have currentNode as 99 and move them to the next node
 		for( i = 0; i < numPackets; i++)
 		{
+			cout << rpacket[i].currentNode << "  " << rpacket[i].destination << endl;
+			
 			if( (rpacket[i].done == false) && rpacket[i].currentNode != 99 )
 			{
 				// check if its the destination
@@ -224,12 +240,20 @@ int main( int argc, char* argv[] )
 				{
 					nextNode = array[rpacket[i].currentNode].link[rpacket[i].destination];
 					array[rpacket[i].currentNode].queue -= 1;
-					if( array[nextNode].queue != array[nextNode].capacity )
+					if( array[nextNode].queue <= array[nextNode].capacity )
 					{
 						array[nextNode].queue++;
 						rpacket[i].currentNode = nextNode;
 						rpacket[i].nodeStop.push_back( nextNode );
 						rpacket[i].queueAtNode.push_back( array[nextNode].queue );
+						rpacket[i].hops++;
+						if( rpacket[i].hops >= hopmax )
+						{
+							rpacket[i].done = true;
+							rpacket[i].lost = true;
+							array[nextNode].queue--;
+							
+						}
 					}
 					else
 					{
@@ -242,7 +266,7 @@ int main( int argc, char* argv[] )
 			}
 		}
 		// load packets into network
-		int previousNode = 99; // this makes sure they go into it one at a time.
+		previousNode = 99; // this makes sure they go into it one at a time.
 		for( i = 0; i < numPackets; i++ )
 		{
 			if( (rpacket[i].ID != previousNode) && (rpacket[i].currentNode != 99) && (rpacket[i].done == false) )
@@ -251,6 +275,7 @@ int main( int argc, char* argv[] )
 				array[rpacket[i].currentNode].queue += 1;
 				rpacket[i].nodeStop.push_back(rpacket[i].currentNode);
 				rpacket[i].queueAtNode.push_back(array[rpacket[i].currentNode].queue );
+				previousNode = rpacket[i].source;
 			}
 		}
 		packetsLeft = 0;
@@ -263,6 +288,7 @@ int main( int argc, char* argv[] )
 		// update count if count = updateTime reset count and update the forwarding table
 
 	}
+	cout << list << endl;	
 	// file output
 	int plost = 0;
 	ofstream results ("results.txt");
