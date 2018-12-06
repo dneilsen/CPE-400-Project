@@ -183,7 +183,7 @@ int main( int argc, char* argv[] )
 
 	array[8].neighbors.push_back(array[5]);
 	array[8].neighbors.push_back(array[6]);
-	
+	cout << "array good" << endl;
 	// initialize the forwarding table
 	for( i = 0; i < 9; i++ )
 	{
@@ -205,7 +205,7 @@ int main( int argc, char* argv[] )
 	}
 
 	Packet rpacket[numPackets]; // creates a list of all packets
-
+	cout << numPackets << endl;
 	k = 0;
 	for( i = 0; i < list; i++ )
 	{
@@ -225,7 +225,6 @@ int main( int argc, char* argv[] )
 		// loop through packets that dont have currentNode as 99 and move them to the next node
 		for( i = 0; i < numPackets; i++)
 		{
-			cout << rpacket[i].currentNode << "  " << rpacket[i].destination << endl;
 			
 			if( (rpacket[i].done == false) && rpacket[i].currentNode != 99 )
 			{
@@ -269,8 +268,10 @@ int main( int argc, char* argv[] )
 		previousNode = 99; // this makes sure they go into it one at a time.
 		for( i = 0; i < numPackets; i++ )
 		{
-			if( (rpacket[i].ID != previousNode) && (rpacket[i].currentNode != 99) && (rpacket[i].done == false) )
+			
+			if( (rpacket[i].currentNode == 99) && (rpacket[i].done == false) )
 			{
+				cout << "hello" << endl;
 				rpacket[i].currentNode = rpacket[i].source;
 				array[rpacket[i].currentNode].queue += 1;
 				rpacket[i].nodeStop.push_back(rpacket[i].currentNode);
