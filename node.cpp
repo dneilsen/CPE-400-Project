@@ -3,7 +3,7 @@
 // dynamic routing mechanism design with focus on throughput
 //
 // Edited by
-// David Neilson: Node class
+// David Neilson: Node class and network
 // Nicholas Rini: edited Node class, created Network
 // Michael Mills: edited node class, started linkStateAlgorithm aka dijkstra's, added file stream, added packet class
 // Nicholas Rini: file input
@@ -21,6 +21,7 @@ using namespace std;
 // global constants
 const int maxcapacity = 5;
 const int updateTime = 10;
+const int hopmax = 9;
 
 
 
@@ -95,7 +96,7 @@ class Packet
 	Packet();
 	~Packet();
 	// data in packet, not creating separate data structure
-	int ID, currentNode;	
+	int ID, currentNode, hops;	
 	time_t startTime;
 	time_t endTime;
 	bool lost,done;
@@ -119,6 +120,7 @@ void makePacket( int s, int d, int id, Packet pack)
 	pack.destination = d;
 	pack.ID = id;
 	pack.currentNode = 99; // 99 means its waiting to enter network
+	pack.hops = 0;
 	pack.startTime = time(0);
 	pack.lost = false;
 	pack.done = false;
@@ -136,17 +138,18 @@ int main( int argc, char* argv[] )
 	packetFile >> list;
 	int rsource[list], rdestination[list], rpacketnum[list];	
 	
-	while( packetFile.good() )
+	for( i = 0; i< list; i++ )
 	{
 		packetFile >> rsource[i];
 		packetFile >> rdestination[i];
 		packetFile >> rpacketnum[i];
 		k++;
 	}
+
 	packetFile.close();
 	if( k != list ){ cout << "potential error: input file length";}
 	// create the network
-	Node* array = new Node[8];
+	Node* array = new Node[9];
 
 	for( i = 0; i < 8; i++)
 	{
@@ -179,13 +182,15 @@ int main( int argc, char* argv[] )
 
 	array[8].neighbors.push_back(array[5]);
 	array[8].neighbors.push_back(array[6]);
-	
+
 	// create packets for the network
 	for( i = 0; i < list; i++ )
 	{
-		numPackets += rpacketnum[i]; // gets total number of packets
+		numPackets += rpacketnum[i]; // gets total number of packets			
 	}
+
 	Packet rpacket[numPackets]; // creates a list of all packets
+
 
 	for( i = 0; i < list; i++ )
 	{
@@ -194,7 +199,9 @@ int main( int argc, char* argv[] )
 			makePacket( rsource[i], rdestination[i], i, rpacket[i] );
 		}
 	}
-
+	
+	cout << list << endl;
+	
 	// now to loop all the packets through the nodes
 	int count = 0;
 	int nextNode;
