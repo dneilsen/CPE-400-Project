@@ -73,7 +73,7 @@ void linkStateAlgorithm( Node* array, int arrayNum ) // aka dijkstra's
 			cost[i] = 0; // 0 will represent infinity
 		}
 		
-		nsize = array[i].neighbors.size()			// the loop
+		nsize = array[i].neighbors.size();			// the loop
 		for( int j = 0; j < nsize; j++)
 		{
 			cost[array[i].neighbors[j].ID] = array[i].neighbors[j].weight;
@@ -113,7 +113,7 @@ Packet::~Packet()
 {
 	
 }
-Packet::makePacket( int s, int d, int id, Packet pack);
+void makePacket( int s, int d, int id, Packet pack)
 {
 	pack.source = s;
 	pack.destination = d;
@@ -191,7 +191,7 @@ int main( int argc, char* argv[] )
 	{
 		for( j = 0; j < rpacketnum[i]; j++ )
 		{
-			makePacket( rsource[i], rdestination[i], i, rpackets[i] );
+			makePacket( rsource[i], rdestination[i], i, rpacket[i] );
 		}
 	}
 
@@ -210,7 +210,7 @@ int main( int argc, char* argv[] )
 				if( rpacket[i].currentNode == rpacket[i].destination )
 				{
 					rpacket[i].done = true;
-					rpacket[i].endtime = time(0);
+					rpacket[i].endTime = time(0);
 				}
 				// move the currentNode to the next node and decrease queue, update packet with next nodes id and queue, if queue full lost packet, increase next node queue
 				 else
@@ -243,7 +243,7 @@ int main( int argc, char* argv[] )
 				rpacket[i].currentNode = rpacket[i].source;
 				array[rpacket[i].currentNode].queue += 1;
 				rpacket[i].nodeStop.push_back(rpacket[i].currentNode);
-				rpacket[i].queueatNode.push_back(array[rpacket[i].currentNode].queue );
+				rpacket[i].queueAtNode.push_back(array[rpacket[i].currentNode].queue );
 			}
 		}
 		packetsLeft = 0;
@@ -266,9 +266,9 @@ int main( int argc, char* argv[] )
 		// output #of packets lost
 		for( i = 0; i < numPackets; i++ )
 		{
-			if( rpackets[i].lost ) plost++;
+			if( rpacket[i].lost ) plost++;
 		}
-		cout << "number of packets Lost: " << plost << endl() << endl();
+		cout << "number of packets Lost: " << plost << endl << endl;
 		
 		// output data from packets
 		
