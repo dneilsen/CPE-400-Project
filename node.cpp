@@ -213,7 +213,6 @@ int main( int argc, char* argv[] )
 		{
 			makePacket( rsource[i], rdestination[i], k, rpacket[k] );
 			k++;
-			cout << rpacket[i].ID << endl;
 		}
 	}
 	// now to loop all the packets through the nodes
@@ -252,7 +251,7 @@ int main( int argc, char* argv[] )
 							rpacket[i].done = true;
 							rpacket[i].lost = true;
 							array[nextNode].queue--;
-							
+							rpacket[i].endTime = time(0);
 						}
 					}
 					else
@@ -288,7 +287,7 @@ int main( int argc, char* argv[] )
 		// update count if count = updateTime reset count and update the forwarding table
 
 	}
-	cout << list << endl;	
+	
 	// file output
 	int plost = 0;
 	ofstream results ("results.txt");
@@ -304,13 +303,15 @@ int main( int argc, char* argv[] )
 		cout << "number of packets Lost: " << plost << endl << endl;
 		
 		// output data from packets
+		cout << "ID    Time           nodes stopped at      queue at node stopped at" << endl;
 		for( i = 0; i < numPackets; i++ )
 		{
-			cout << rpacket[i].ID << "    " << rpacket[i].startTime << "    " << rpacket[i].endTime << "    ";
+			cout << rpacket[i].ID << "    " <<  rpacket[i].endTime - rpacket[i].startTime  << "    ";
 			for( j = 0; j < rpacket[i].nodeStop.size(); j++ )
 			{
-				cout << rpacket[i].nodeStop[j] << "    " << rpacket[i].queueAtNode[j] << endl;
+				cout << "  " << rpacket[i].nodeStop[j] << "    " << rpacket[i].queueAtNode[j];
 			}
+			cout << endl;
 		}
 		
 		
