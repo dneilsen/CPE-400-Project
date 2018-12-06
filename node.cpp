@@ -17,6 +17,12 @@
 
 using namespace std;
 
+// global constants
+const int maxcapacity = 5;
+const int updateTime = 10;
+
+
+
 class Node{
 
 	public:
@@ -27,8 +33,8 @@ class Node{
 	int pSpeed;
 	int weight;
 	// forwarding table
-	vector<int> destination;
-	vector<int> link;
+	int destination[9];
+	int link[9];
 	// links from node
     vector<Node> neighbors;
 
@@ -41,7 +47,7 @@ Node::Node(){
 
     ID = 0;
 	queue = 0;
-	capacity = 5;
+	capacity = maxcapacity;
 	pSpeed = 5;
 	weight = 1;
 }
@@ -58,7 +64,8 @@ void linkStateAlgorithm( Node* array, int arrayNum ) // aka dijkstra's
 {
 	// initialize
 	arrayNum;
-	int cost[arrayNum-1];
+	int cost[arrayNum];
+	int parent[arrayNum];
 	int nsize,i,j;
 	for( i = 0; i < arrayNum; i++)
 	{
@@ -86,16 +93,25 @@ class Packet
 	// udp style packet leaving out length and checksum
 	int source;
 	int destination;
-
+	Packet();
+	~Packet();
 	// data in packet, not creating separate data structure
-	int ID;	
+	int ID, currentNode;	
 	time_t startTime;
 	time_t endTime;
-	int hops;
-	vector<int> nodeStop;
+	bool lost,done;
+	vector<int> nodeStop; // size of nodeStop is # of hops
 	vector<int> queueAtNode;
 	
 	makePacket( int s, int d, int id );
+	
+};
+Packet::Packet()
+{
+	
+}
+Packet::~Packet()
+{
 	
 }
 Packet::makePacket( int s, int d, int id);
@@ -103,27 +119,33 @@ Packet::makePacket( int s, int d, int id);
 	source = s;
 	destination = d;
 	ID = id;
+	currentNode = 99; // 99 means its waiting to enter network
 	startTime = time(0);
-	hops = 0;
+	lost = false;
 	nodeStop.push_back( s );
 	queueAtNode.push_back( id );
 }
 
 int main( int argc, char* argv[] )
 {
-	int i, j, k = 0, numPackets = 0;
-	int rsource[argc/3], rdestination[argc/3], rpacketnum[argc/3];
-	// read in from command line the source destinatin and # of packets
-	for( i = 0; i < argc/3; i++ )
+	int i, j, k = 0, numPackets = 0, list;
+
+	// read in from file the source destinatin and # of packets
+	ifstream packetFile;
+	packetFile.open( argv[1] );
+	if( !packetFile.is_open()) {cout << "potential error: input file open";}
+	
+	packetFile >> list;
+	int rsource[list], rdestination[list], rpacketnum[list];	
+	
+	while( packetFile.good() )
 	{
-		rsource[i] = atoi( argv[k] );
-		k++;
-		rdestination[i] = atoi( argv[k] );
-		k++;
-		rpacketnum[i] = atoi( argv[k] );
+		packetFile >> rsource[i];
+		packetFile >> rdestination[i];
+		packetFile >> rpacketnum[i];
 		k++;
 	}
-	
+	if( k != list ){ cout << "potential error: input file length";}
 	// create the network
 	Node* array = new Node[8];
 
@@ -160,32 +182,48 @@ int main( int argc, char* argv[] )
 	array[8].neighbors.push_back(array[6]);
 	
 	// create packets for the network
-	for( i = 0; i < argc/3; i++ )
+	for( i = 0; i < list; i++ )
 	{
-		numPackets += rpacketnum[i];
+		numPackets += rpacketnum[i]; // gets total number of packets
 	}
-	Packet rpacket[numPackets]
-	k = 0;
-	for( i = 0; i < argc/3; i++ )
+	Packet rpacket[numPackets]; // creates a list of all packets
+
+	for( i = 0; i < list; i++ )
 	{
 		for( j = 0; j < rpacketnum[i]; j++ )
 		{
-			rpackets[k] = makePacket( rsource[i], rdestination[i], k )
+			rpackets[i] = makePacket( rsource[i], rdestination[i], i )
 		}
 	}
-	
-	// loop through packets and nodes
-	
-	// move packets through network one node at a time
+	// no longer have to worry about command line arguments
+	// now to loop through all the packets through the nodes
+	int count = 0;
+	while( packetsLeft )
+	{
+		// load packets into network
+		int previousNode = 99;
+		for( i = 0; i < numPackets; i++ )
+		{
+			if( (rpacket[i].ID != previousNode) && (rpacket[i].currentNode != 99) )
+			{
+				rpacket[i].currentNode = rpacket[i].source;
+			}
+		}
 
-
+	}
 	// file output
+	int plost = 0;
 	ofstream results ("results.txt");
 	if( results.is_open())
 	{
-		// calculate overall throughput and output to file // average( endTime - startTime + ( hops * nodalDelay ) )
+		// calculate overall throughput and output to file // average( endTime - startTime + ( sum(queueatnode) * nodalDelay ) )
 		
 		// output #of packets lost
+		for( i = 0; i < numPackets; i++ )
+		{
+			if( rpackets[i].lost ) plost++;
+		}
+		cout << "number of packets Lost: " << plost << endl() << endl();
 		
 		// output data from packets
 		
